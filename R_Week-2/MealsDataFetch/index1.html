@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meal Explorer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fafafa;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input, select {
+      padding: 8px;
+      font-size: 16px;
+    }
+
+    .meal-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .meal-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      padding: 10px;
+      transition: 0.2s;
+    }
+
+    .meal-card:hover {
+      transform: scale(1.03);
+    }
+
+    img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .meal-name {
+      font-weight: bold;
+      margin-top: 8px;
+      color: #333;
+    }
+
+    .meal-area {
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🍴 Meal Explorer</h1>
+
+  <!-- Controls for filtering & sorting -->
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search by Name or Category..." />
+
+    <select id="sort">
+      <option value="">Sort By</option>
+      <option value="name-asc">Name (A → Z)</option>
+      <option value="name-desc">Name (Z → A)</option>
+      <option value="area-asc">Area (A → Z)</option>
+      <option value="area-desc">Area (Z → A)</option>
+    </select>
+  </div>
+
+  <!-- Display results -->
+  <div class="meal-list" id="meal-list"></div>
+
+  <script>
+    const mealList = document.getElementById("meal-list");
+    const searchInput = document.getElementById("search");
+    const sortSelect = document.getElementById("sort");
+
+    let meals = []; // all meals from API
+    let filteredMeals = []; // for display
+
+    // Fetch meals from TheMealDB API
+    async function fetchMeals() {
+      const response = await fetch("https://www.themealdb.com/api/json/v1/1/search.php?f=a");
+      const data = await response.json();
+      meals = data.meals || [];
+      filteredMeals = [...meals];
+      displayMeals(filteredMeals);
+    }
+
+    // Display meals dynamically
+    function displayMeals(mealArray) {
+      mealList.innerHTML = "";
+      if (mealArray.length === 0) {
+        mealList.innerHTML = "<p>No meals found.</p>";
+        return;
+      }
+
+      mealArray.forEach(meal => {
+        const card = document.createElement("div");
+        card.classList.add("meal-card");
+
+        card.innerHTML = `
+          <img src="${meal.strMealThumb}" alt="${meal.strMeal}">
+          <div class="meal-name">${meal.strMeal}</div>
+          <div class="meal-area">${meal.strArea}</div>
+          <div class="meal-category">${meal.strCategory}</div>
+        `;
+
+        mealList.appendChild(card);
+      });
+    }
+
+    // Filter meals as user types
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.toLowerCase();
+
+      filteredMeals = meals.filter(meal =>
+        meal.strMeal.toLowerCase().includes(query) ||
+        meal.strCategory.toLowerCase().includes(query)
+      );
+
+      applySorting();
+    });
+
+    // Sort meals dynamically
+    sortSelect.addEventListener("change", () => {
+      applySorting();
+    });
+
+    function applySorting() {
+      const sortValue = sortSelect.value;
+
+      if (sortValue === "name-asc") {
+        filteredMeals.sort((a, b) => a.strMeal.localeCompare(b.strMeal));
+      } else if (sortValue === "name-desc") {
+        filteredMeals.sort((a, b) => b.strMeal.localeCompare(a.strMeal));
+      } else if (sortValue === "area-asc") {
+        filteredMeals.sort((a, b) => a.strArea.localeCompare(b.strArea));
+      } else if (sortValue === "area-desc") {
+        filteredMeals.sort((a, b) => b.strArea.localeCompare(a.strArea));
+      }
+
+      displayMeals(filteredMeals);
+    }
+
+    // Initialize app
+    fetchMeals();
+  </script>
+</body>
+</html>
