@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies</title>
+</head>
+<style>
+    body{
+        font-family: Arial, Helvetica, sans-serif;
+        text-align: center;
+        margin: 20px;
+        background-color: #f9f9f9;
+    }
+    input, button , select{
+        margin: 5px;
+        padding: 8px;
+        font-size: 16px;
+    }
+    button{
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+    }
+    button:hover{
+        background-color: #0056b3;
+    }
+    #movieList{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    #movieList div{
+        background-color: white;
+        padding-block-start: 10px;
+        margin: 10px;
+        width: 180px;
+    }
+    img{
+        max-width: 100%;
+    }
+</style>
+<body>
+    <h2>🎬Movie Search</h2>
+    <input type="text" id="searchInput" placeholder="Enter Movie">
+    <button onclick="searchMovies()">Search</button>
+
+    <select name="" id="sortOptions" onchange="sortMovies()">
+        <option value="year-asc">Year (Oldest First)</option>
+        <option value="year-desc">Year (Newest First)</option>
+    </select>
+
+    <button onclick="filterMovies('movie')">Movies</button>
+    <button onclick="filterMovies('series')">Series</button>
+    <button onclick="filterMovies('episodes')">Episodes</button>
+    <div id="movieList"></div>
+    <button onclick="prevPage()">Prev</button>
+    <button onclick="nextPage()">Next</button>
+    
+</body>
+</html>
+<script>
+    let Api_key ="3ad41b8e"
+    let moviesdata=[]
+    let page=1
+    let currentType=""
+    async function searchMovies(){
+        let query=document.getElementById("searchInput").value;
+        if(!query) return alert("Please Enter movie Name")
+        let url=`https://www.omdbapi.com/?apikey=${Api_key}&s=${query}&page=${page}`
+        // let res=await fetch(`https://www.omdbapi.com/?apikey=${Api_key}&s=${query}&page=${page}`)
+        if(currentType) url+=`&type=${currentType}`
+        let res=await fetch(url)
+        let data =await res.json()
+        if(data.Search){
+            moviesdata=data.Search
+            displayMovies(moviesdata)
+        } 
+        else{
+            container.innerHTML="<p>No Movies Found</p>"
+        }
+    }
+    function displayMovies(movies){
+        let container=document.getElementById("movieList")
+        container.innerHTML=""
+        movies.forEach((movie)=>{
+                let moviecard=document.createElement("div");
+                moviecard.innerHTML=`
+                <h3>${movie.Title} (${movie.Year})</h3>
+                <img src="${movie.Poster}" alt="">`
+                container.append(moviecard)
+            })
+    }
+    function sortMovies(){
+        let sortBy=document.getElementById("sortOptions").value;
+        let sortedMovies=[...moviesdata]
+        sortedMovies.sort((a,b)=>{
+            let yearA=parseInt(a.Year)
+            let yearB=parseInt(b.Year)
+            if(sortBy=="year-asc") return yearA-yearB
+            if(sortBy=="year-desc") return yearB-yearA
+            
+
+        })
+        displayMovies(sortedMovies)
+    }
+    async function filterMovies(type){
+        currentType=type
+        page=1
+        searchMovies(page)
+        // let query=document.getElementById("searchInput").value;
+        // if(!query) return alert("Enter movie name")
+        // let res=await fetch(`https://www.omdbapi.com/?apikey=${Api_key}&s=${query}&type=${type}`)
+        // let data =await res.json()
+        // if(data.Search){
+        //     moviesdata=data.Search
+        //     displayMovies(moviesdata)
+        // }
+    }
+    function prevPage(){
+        page-=1
+        searchMovies(page)
+    }
+    function nextPage(){
+        page+=1
+        searchMovies(page)
+    }
+</script>
